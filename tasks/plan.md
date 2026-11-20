@@ -12,6 +12,8 @@ The competition's exact submission checklist is not included in the project file
 
 Each row is one independently accountable task. The week header supplies its deadline; every task begins Not Started. Evidence is the artifact named in the last column, to be linked in the tracker and reviewed by SJ or the named reviewer.
 
+The actionable steps for all 35 deliverables are in [the weekly task breakdown](weekly-breakdown.md). For import into a separate Notion subtask database, use [the 140-row CSV](weekly-subtasks.csv). Each subtask inherits its parent deliverable's deadline and starts Not Started.
+
 ### Week 1 — Research foundation and feasibility (Nov 23–29)
 
 | Task ID | Owner / vertical | Objective and deliverable | Dependencies | Acceptance criteria | Status | Evidence |

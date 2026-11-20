@@ -17,6 +17,8 @@ The repository currently contains project documentation and a competition refere
 - [Evidence-first scope decision](docs/decisions/0001-evidence-first-claims.md) — why deformation and groundwater risk must be reported separately.
 - [Open questions](docs/open-questions.md) — unresolved decisions and their planned review gates.
 - [Weekly deliverables plan](tasks/plan.md) — 35 owner-specific deliverables through January 7, 2027.
+- [Weekly task breakdown](tasks/weekly-breakdown.md) — 140 actionable subtasks grouped by week, owner, and parent deliverable.
+- [Notion subtask import CSV](tasks/weekly-subtasks.csv) — one row per actionable subtask.
 - [Weekly task checklist](tasks/todo.md) — status checklist for those deliverables.
 
 ## Start here
