@@ -4,7 +4,9 @@ All tasks start **Not Started**. Update status only after the named evidence is 
 
 ## Week 1 — Nov 23–29
 
-- [ ] AQS-W01-SJ — Pilot-region scoring rubric and checkpoints (SJ)
+SJ draft submitted 2026-11-21; review at the 2026-11-29 gate. Checkbox stays open until the evidence is reviewed.
+
+- [ ] AQS-W01-SJ — Pilot-region scoring rubric and checkpoints (SJ) — **In Review** · [rubric](../deliverables/week-01/AQS-W01-SJ-pilot-region-rubric.md)
 - [ ] AQS-W01-MF — Candidate-region groundwater/reference-data inventory (MF)
 - [ ] AQS-W01-SM — Sentinel-1 feasibility screen (SM)
 - [ ] AQS-W01-AC — Data contract and exploratory comparison protocol (AC)
