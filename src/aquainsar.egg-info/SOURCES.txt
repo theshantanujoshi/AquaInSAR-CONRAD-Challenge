@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+src/aquainsar/__init__.py
+src/aquainsar/comparison.py
+src/aquainsar.egg-info/PKG-INFO
+src/aquainsar.egg-info/SOURCES.txt
+src/aquainsar.egg-info/dependency_links.txt
+src/aquainsar.egg-info/requires.txt
+src/aquainsar.egg-info/top_level.txt
+tests/test_comparison.py

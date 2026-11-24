@@ -1,0 +1,8 @@
+pandas>=1.5
+matplotlib>=3.5
+
+[dev]
+pytest>=7
+nbformat>=5
+nbclient>=0.7
+ipykernel>=6
