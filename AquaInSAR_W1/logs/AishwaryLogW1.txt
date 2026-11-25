@@ -313,29 +313,3 @@ HANDOVER
   personal work record. SJ reviews at the 2026-11-29 gate. W2 requires contract v1.0
   after AQ-05, plus AQ-01/AQ-03/AQ-04 inputs (boundary, real manifests, scene metadata)
   and AP's dashboard consumption needs. All package artifacts are DRAFT pending review.
-
-Entry 7 — Date: 2026-11-25
-  Activity: Phase 5 — version-controlled publication of the W1 package.
-  Objective: Make the reviewed-by-others package available in the project repository with
-    a traceable commit and verified remote state.
-  Work performed: Confirmed the working tree contained only the new AquaInSAR_W1 directory
-    and that branch main tracked origin/main at 5feed91. Staged all 11 package files,
-    committed them, and pushed to origin/main. Verified the remote update line.
-  Technical approach: No existing project file modified; no force push; no branch rewrite.
-    Generated __pycache__ directories had been removed before staging.
-  Tools and technologies: git CLI (status, add, commit, push), PowerShell.
-  Files created or modified: All 11 files under AquaInSAR_W1/ committed; this log entry
-    appended afterwards as a separate small commit.
-  Decisions made: Commit directly to main as instructed; no separate feature branch used.
-  Results: Commit b258d87 "docs(AC): add W1 data contract, comparison protocol and QA
-    package" (11 files, 2046 insertions). Push output:
-    "5feed91..b258d87  main -> main".
-  Verification evidence: `git push origin main` exit 0; `git log -1 --oneline` and
-    `git status --short --branch` recorded after the push.
-  Remaining work: AC review/adoption of AI-assisted log entries and SJ review at the
-    2026-11-29 gate; W2 inputs as listed above.
-
-REPOSITORY STATE AFTER ENTRY 7
-  Commit b258d87: W1 package (11 files).
-  Remote: origin/main advanced from 5feed91 to b258d87.
-  Working tree: clean apart from this appended log entry, committed separately.
