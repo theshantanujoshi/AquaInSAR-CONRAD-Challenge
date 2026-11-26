@@ -4,6 +4,8 @@
 
 **Research snapshot:** 2026-11-24. Recheck live access, product status, competition rules, and data releases before relying on operational details.
 
+A sourced dossier expanding these notes, with access dates and a consolidated register, is in [`docs/research/README.md`](research/README.md).
+
 ## How to use these notes
 
 - Treat cited studies as published evidence about their own locations, periods, methods, and uncertainties. Their results do not establish a groundwater–subsidence relationship for a future AquaInSAR pilot.
@@ -91,8 +93,6 @@ The team's current category is recorded as Aerospace & Aviation. The official [W
 
 For judges or users, a map alone is unlikely to establish value. A credible demonstration should show the source and date of each layer, the uncertainty/quality mask, the ground-reference comparison, what decision the information could change, and what the method cannot say. A short, reproducible, carefully scoped pilot is more defensible than a broad prediction claim unsupported by labels.
 
-For judges or users, a map alone is unlikely to establish value. A credible demonstration should show the source and date of each layer, the uncertainty/quality mask, the ground-reference comparison, what decision the information could change, and what the method cannot say. A short, reproducible, carefully scoped pilot is more defensible than a broad prediction claim unsupported by labels.
-
 ## Sources and further reading
 
 ### Official and operational sources
@@ -110,8 +110,8 @@ For judges or users, a map alone is unlikely to establish value. A credible demo
 ### Peer-reviewed Uttar Pradesh studies
 
 - Awasthi, S. et al. (2022). “Analyzing urbanization induced groundwater stress and land deformation using time-series Sentinel-1 datasets applying PSInSAR approach.” *Science of the Total Environment*, 844, 157103. [DOI: 10.1016/j.scitotenv.2022.157103](https://doi.org/10.1016/j.scitotenv.2022.157103).
-- (2022). “Multi-temporal analysis of groundwater depletion-induced land subsidence in Central Ganga Alluvial plain, Northern India.” [DOI: 10.1080/10106049.2022.2060322](https://doi.org/10.1080/10106049.2022.2060322).
-- (2024). “Declining groundwater and its impacts along Ganga riverfronts using combined Sentinel-1, GRACE, water levels, and rainfall data.” *Science of the Total Environment*. [DOI: 10.1016/j.scitotenv.2024.170932](https://doi.org/10.1016/j.scitotenv.2024.170932).
+- Raju, A., Nanda, R., Singh, A., and Malik, K. (2022). “Multi-temporal analysis of groundwater depletion-induced land subsidence in Central Ganga Alluvial plain, Northern India.” *Geocarto International*, 37(26), 11732–11755. [DOI: 10.1080/10106049.2022.2060322](https://doi.org/10.1080/10106049.2022.2060322).
+- Raju, A., Singh, R. P., Kannojiya, P. K., Patel, A., Singh, S., and Sinha, M. (2024). “Declining groundwater and its impacts along Ganga riverfronts using combined Sentinel-1, GRACE, water levels, and rainfall data.” *Science of the Total Environment*, 920, 170932. [DOI: 10.1016/j.scitotenv.2024.170932](https://doi.org/10.1016/j.scitotenv.2024.170932).
 - More, S. et al. (2025). “Groundwater over-extraction and associated land subsidence in Lucknow, Ganga Basin, India: Insights from space geodetic observations.” *Near Surface Geophysics*, 23(4), 420–433. [DOI: 10.1002/nsg.70020](https://doi.org/10.1002/nsg.70020).
 
 ### Official competition sources to verify before submission
