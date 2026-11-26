@@ -2,11 +2,12 @@
 
 **Task:** AQS-W01-MF  
 **Owner:** MF — Groundwater Research Scientist  
-**Version:** v1.0 (Week 1 review submission)  
-**Date:** 2026-11-24  
+**Version:** v1.1 (PR submission for Week 1 review)  
+**Date:** 2026-11-26  
 **Review gate:** 2026-11-29  
 **Pilot decision gate:** 2026-12-06  
-**Status:** In Review — no pilot region selected
+**Status:** In Review — no pilot region selected  
+**PR:** `MF-WEEK1 DELIVERABLE` — opened for Week 1 review; substantive content unchanged from v1.0.
 
 ## Purpose and claim boundary
 
