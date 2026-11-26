@@ -11,7 +11,7 @@
 | CON-03 | Challenge overview | Conrad Challenge | <https://conrad.spacecenter.org/the-challenge/> | Retrieved 2026-11-26 | General timeline; shows January 8, conflicting with January 7 sources | The January 8 date is unresolved; do not use it silently. |
 | CON-04 | Water Challenge | Conrad Challenge | <https://conrad.spacecenter.org/water-challenge/> | Retrieved 2026-11-26 | Water Challenge scope: safe/sustainable water, equity, efficiency, purity | Does not state whether AquaInSAR qualifies or whether a category change is allowed. |
 | CON-05 | Aerospace and Aviation | Conrad Challenge | <https://conrad.spacecenter.org/aerospace-and-aviation/> | Retrieved 2026-11-26 | Category scope as published | Does not confirm the team's registered category. |
-| CON-06 | Rules and Regulations | Conrad Challenge | <https://conrad.spacecenter.org/the-challenge/rules-and-regulations/> | Retrieved 2026-11-26 (HTTP 200) | Rules context; Space Center Houston authority over category assignment | Category-change procedure not confirmed in the extracted material; ask Conrad. |
+| CON-06 | Rules and Regulations | Conrad Challenge | <https://conrad.spacecenter.org/the-challenge/rules-and-regulations/> | Retrieved 2026-11-26 (HTTP 200) | Rules landing page for the competition | Category-change procedure and final-assignment authority were not confirmed from the extracted text; ask Conrad. |
 
 ## Groundwater and rainfall sources
 
