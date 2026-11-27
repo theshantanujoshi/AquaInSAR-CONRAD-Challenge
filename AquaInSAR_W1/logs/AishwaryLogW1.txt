@@ -97,10 +97,10 @@ Entry 3 — Date: 2026-11-24
   Activity: Phase 2 — wrote the exploratory comparison protocol.
   Objective: Specify how deformation and reference data may be explored without implying
     results, validation or prediction.
-  Work performed: Created protocols/AquaInSAR_Exploratory_Comparison_Protocol_v1.0.md with
+  Work performed: Created protocols/AquaInSAR_Exploratory_Comparison_Protocol_v0.9.0.md with
     research objective, data-preparation rules, spatial-method table (point-in-pixel,
     buffer, zonal, grid, interpolation with preconditions), temporal-method table (exact,
-    window, aggregation, lag, alignment), six exploratory statistical methods each with
+    window, aggregation, lag, alignment), eight exploratory statistical methods each with
     purpose/inputs/assumptions/output/interpretation/limitations, uncertainty register,
     reproducibility rules and W1 status.
   Technical approach: Pre-registration of matching rules; all comparisons reported including
@@ -216,8 +216,8 @@ reference entries, 11 validation rules and a pending-decision register. Not appr
 promotion to v1.0 is gated on AQ-01/AQ-03/AQ-04/AQ-05.
 
 8. EXPLORATORY COMPARISON PROTOCOL DEVELOPMENT
-Completed in Entry 3 at draft level: protocols/AquaInSAR_Exploratory_Comparison_Protocol_v1.0.md.
-It specifies candidate spatial/temporal matching methods with preconditions, six exploratory
+Completed in Entry 3 at draft level: protocols/AquaInSAR_Exploratory_Comparison_Protocol_v0.9.0.md.
+It specifies candidate spatial/temporal matching methods with preconditions, eight exploratory
 statistics with assumptions and limitations, an uncertainty register, reproducibility rules,
 and a W1 status statement that no comparison has been executed.
 
@@ -227,11 +227,12 @@ and CSV validator, JSON reports, CLI), package __init__.py, two unittest modules
 package README.md. No scientific processing, conversion, matching or statistics implemented.
 
 10. TESTING AND VALIDATION
-Executed in Entries 5 and 6. Final results: check-contract PASS (0 issues); unittest
-24/24 OK; pytest 24 passed + 75 subtests; json.tool and py_compile exit 0; CLI valid-CSV
-PASS and invalid-CSV FAIL with six expected rule violations. Three defect cycles were
-found and fixed (missing dataset_id fields, over-literal prose assertions, VR-001 applied
-to optional columns). Full expected/actual table in reports/W1_QA_Report.md.
+Executed in Entries 5, 6 and 8. Latest results (Entry 8, 2026-11-27): check-contract PASS
+(0 issues); unittest 47/47 OK; pytest 47 passed + 90 subtests; json.tool exit 0; CLI
+valid-CSV PASS and invalid-CSV FAIL with six expected rule violations. Defect cycles found
+and fixed: missing dataset_id fields, over-literal prose assertions, VR-001 on optional
+columns, dataset_id version suffix, stale loop variable in VR-016, counting absent columns.
+Full expected/actual table in reports/W1_QA_Report.md.
 
 11. PROBLEMS ENCOUNTERED
   - No local science data: schemas can be specified but cannot be exercised against real
@@ -264,7 +265,7 @@ to optional columns). Full expected/actual table in reports/W1_QA_Report.md.
   - README.md
   - contracts/AquaInSAR_Data_Contract_v0.9.0.md
   - contracts/AquaInSAR_Data_Contract_v0.9.0.json
-  - protocols/AquaInSAR_Exploratory_Comparison_Protocol_v1.0.md
+  - protocols/AquaInSAR_Exploratory_Comparison_Protocol_v0.9.0.md
   - src/aquainsar_w1/__init__.py, src/aquainsar_w1/contract_tools.py
   - tests/test_contract_tools.py, tests/test_docs_consistency.py
   - reports/W1_Project_Context_Map.md, reports/W1_QA_Report.md
@@ -313,3 +314,38 @@ HANDOVER
   personal work record. SJ reviews at the 2026-11-29 gate. W2 requires contract v1.0
   after AQ-05, plus AQ-01/AQ-03/AQ-04 inputs (boundary, real manifests, scene metadata)
   and AP's dashboard consumption needs. All package artifacts are DRAFT pending review.
+
+Entry 8 — Date: 2026-11-27
+  Activity: PR review response — contract semantics, provenance, documentation and QA.
+  Objective: Fix every must-fix and should-fix review item without a pilot decision, real
+    data, or work belonging to W2–W7.
+  Work performed: Rebased the PR branch feat/AC-AquaInSAR-W1 onto current main so it
+    includes PR #4 (removal of tracked egg-info/__pycache__ artifacts, .gitignore) and PR #5
+    (GitHub Actions validation workflow). Updated the JSON and Markdown contract with:
+    value/quality flag semantics and conditional nullability (VR-012/VR-013), mandatory
+    InSAR platform/relative_orbit/pass_direction plus track-aware unique key, explicit
+    rainfall period_start/period_end (VR-015), row-level dataset_id matching with version
+    suffix (VR-014), and per-field missing_reason_map (VR-016). Added 23 tests: 5 contract
+    checker negatives and 18 CSV/documentation cases. Renamed the protocol file from v1.0
+    to v0.9.0, labelled it draft, and added the assignment-numbering note. Updated README
+    statuses to "Draft submitted - pending review", corrected the statistics count to
+    eight, replaced the local path in the QA report with <repo-root>, and updated the
+    context map and QA report for the cleaned tree.
+  Technical approach: Kept the contract unreleased at v0.9.0 with a dated revision entry;
+    no version promotion before AQ-05. All new checks are offline and stdlib-only.
+  Tools and technologies: git rebase, Python 3.13.5, unittest, pytest, json.tool, Markdown.
+  Files created or modified: Modified both contract files, contract_tools.py, both test
+    modules, README.md, QA report, context map and this log; renamed the protocol file
+    (git mv). No W2–W7 output created.
+  Decisions made: No-value flags mean "no reliable value exists" — the value must be empty
+    and a reason recorded; value-required flags require a value. Tracks must not be pooled.
+    Rainfall matching must use an explicit interval. Protocol is a draft at v0.9.0.
+  Results: Final execution: check-contract PASS with 0 issues; unittest 47 tests OK;
+    pytest 47 passed + 90 subtests; json.tool exit 0; CLI valid CSV PASS (0 issues) and
+    invalid CSV FAIL (6 expected errors). Three new implementation bugs found during the
+    fix cycle were corrected (pattern suffix, stale loop variable, absent-column counting).
+  Verification evidence: reports/W1_QA_Report.md records final commands, actual outputs and
+    the full defect history. CI workflow .github/workflows/validate.yml was confirmed on
+    the branch via PR #5.
+  Remaining work: Commit and push this review-fix set to the PR branch; AC adoption of
+    AI-assisted log entries and SJ review remain pending.

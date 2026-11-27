@@ -14,7 +14,7 @@ from aquainsar_w1.contract_tools import load_contract  # noqa: E402
 
 CONTRACT_JSON = PACKAGE_ROOT / "contracts" / "AquaInSAR_Data_Contract_v0.9.0.json"
 CONTRACT_MD = PACKAGE_ROOT / "contracts" / "AquaInSAR_Data_Contract_v0.9.0.md"
-PROTOCOL_MD = PACKAGE_ROOT / "protocols" / "AquaInSAR_Exploratory_Comparison_Protocol_v1.0.md"
+PROTOCOL_MD = PACKAGE_ROOT / "protocols" / "AquaInSAR_Exploratory_Comparison_Protocol_v0.9.0.md"
 README = PACKAGE_ROOT / "README.md"
 
 
@@ -63,6 +63,14 @@ class DocumentationConsistencyTests(unittest.TestCase):
         self.assertIn("not a results report", self.protocol_md)
         self.assertIn("No AquaInSAR comparison has been", self.protocol_md)
         self.assertIn("computed.", self.protocol_md)
+
+    def test_protocol_is_draft_version_with_assignment_numbering_note(self):
+        self.assertIn("`0.9.0`", self.protocol_md)
+        self.assertIn("Draft for W1 review", self.protocol_md)
+        self.assertIn("retain the numbering used in the W1 assignment", self.protocol_md)
+
+    def test_readme_references_current_protocol_file(self):
+        self.assertIn("AquaInSAR_Exploratory_Comparison_Protocol_v0.9.0.md", self.readme)
 
     def test_readme_explains_package_and_status(self):
         self.assertIn("AquaInSAR_W1", self.readme)

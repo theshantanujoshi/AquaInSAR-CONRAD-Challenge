@@ -8,7 +8,7 @@
 A provisional, reviewable research-engineering foundation:
 
 - a **versioned data contract** (`v0.9.0`, draft) in human-readable and machine-readable form;
-- an **exploratory comparison protocol** (`v1.0`, draft) that specifies *how* comparisons may be done, without reporting any result;
+- an **exploratory comparison protocol** (`v0.9.0`, draft) that specifies *how* comparisons may be done, without reporting any result;
 - a small **stdlib-only validator** that checks contract consistency and CSV schema/quality;
 - offline deterministic **tests**, a **QA report**, a **project-context map**, and an **activity log**.
 
@@ -27,7 +27,7 @@ AquaInSAR_W1/
 │   ├── AquaInSAR_Data_Contract_v0.9.0.md          human-readable contract
 │   └── AquaInSAR_Data_Contract_v0.9.0.json        canonical machine-readable contract
 ├── protocols/
-│   └── AquaInSAR_Exploratory_Comparison_Protocol_v1.0.md
+│   └── AquaInSAR_Exploratory_Comparison_Protocol_v0.9.0.md
 ├── src/aquainsar_w1/
 │   ├── __init__.py
 │   └── contract_tools.py              contract + CSV validation, stdlib only
@@ -62,9 +62,11 @@ python -m aquainsar_w1.contract_tools validate-csv `
 
 The validator exits `0` for PASS / PASS_WITH_WARNINGS, `1` for FAIL, `2` for contract errors. It prints a JSON report with rule IDs, severities, data-row numbers and field names. It never edits, filters, imputes or repairs input data.
 
+The repository CI workflow `.github/workflows/validate.yml` runs the same contract check, unittest suite and compile check on pull requests and on pushes to `main`, so these checks can be used as a required status check. It uses no third-party Python dependencies.
+
 ## Validation behaviour at a glance
 
-`VR-001` required columns · `VR-002` unexpected columns / empty file (warning) · `VR-003` empty non-nullable field · `VR-004` type/non-finite/range · `VR-005` coordinate range · `VR-006` categorical values · `VR-007` string pattern · `VR-008` unique constraints · `VR-009` value/unit pairing · `VR-010` provenance completeness · `VR-011` contract internal consistency.
+`VR-001` required columns · `VR-002` unexpected columns / empty file (warning) · `VR-003` empty non-nullable field · `VR-004` type/non-finite/range · `VR-005` coordinate range · `VR-006` categorical values · `VR-007` string pattern · `VR-008` unique constraints · `VR-009` value/unit pairing · `VR-010` provenance completeness · `VR-011` contract internal consistency · `VR-012` value/quality flag consistency · `VR-013` no-value reason · `VR-014` row dataset id match · `VR-015` rainfall period order · `VR-016` per-field missing-reason map.
 
 Passing validation means "structurally consistent with the provisional contract", not "scientifically valid" and not "comparable to another dataset".
 
@@ -72,19 +74,19 @@ Passing validation means "structurally consistent with the provisional contract"
 
 | Criterion | Status |
 |---|---|
-| Project context inspected | Done — `reports/W1_Project_Context_Map.md` |
-| Confirmed requirements distinguished from assumptions | Done — classified map and contract PENDING fields |
-| Versioned data contract exists | Done — v0.9.0 draft (not v1.0, see above) |
-| Machine-readable contract valid | Checked — see `reports/W1_QA_Report.md` |
-| Human and machine representations agree | Checked — automated consistency tests |
-| Exploratory comparison protocol documented | Done — v1.0 draft |
-| Methodological limitations addressed | Done — protocol §§4.5–4.7 |
-| Supporting implementation where justified | Done — stdlib validator, no science performed |
-| Tests executed and recorded | See `reports/W1_QA_Report.md` |
-| QA report exists | Done |
-| Activity log accurate | Done — `logs/AishwaryLogW1.txt` |
-| README explains package | Done |
-| Files organised for review | Done |
+| Project context inspected | Draft submitted - pending review — `reports/W1_Project_Context_Map.md` |
+| Confirmed requirements distinguished from assumptions | Draft submitted - pending review — classified map and contract PENDING fields |
+| Versioned data contract exists | Draft submitted - pending review — v0.9.0 draft (not v1.0, see above) |
+| Machine-readable contract valid | Draft submitted - pending review — see `reports/W1_QA_Report.md` |
+| Human and machine representations agree | Draft submitted - pending review — automated consistency tests |
+| Exploratory comparison protocol documented | Draft submitted - pending review — v0.9.0 draft |
+| Methodological limitations addressed | Draft submitted - pending review — protocol §§4.5–4.7 |
+| Supporting implementation where justified | Draft submitted - pending review — stdlib validator, no science performed |
+| Tests executed and recorded | Draft submitted - pending review — see `reports/W1_QA_Report.md` |
+| QA report exists | Draft submitted - pending review |
+| Activity log accurate | Draft submitted - pending review — `logs/AishwaryLogW1.txt` |
+| README explains package | Draft submitted - pending review |
+| Files organised for review | Draft submitted - pending review |
 
 Reviewers should treat all deliverables as **draft pending AC/SJ review**, not as accepted task completion.
 

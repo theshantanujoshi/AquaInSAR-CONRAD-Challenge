@@ -1,12 +1,16 @@
-# AquaInSAR Exploratory Comparison Protocol v1.0
+# AquaInSAR Exploratory Comparison Protocol v0.9.0 (Draft)
 
-**Protocol ID:** `AQS-ECP` · **Version:** `1.0.0` · **Date:** 2026-11-24
+**Protocol ID:** `AQS-ECP` · **Version:** `0.9.0` · **Date:** 2026-11-24
+**Revision date:** 2026-11-27 (version lowered from 1.0.0 because the document is still a draft; unreleased)
 **Owner:** AC (Aishwary) · **Reviewer:** SJ · **Status:** Draft for W1 review
 **Companion contract:** `AQS-DC` v0.9.0 (`../contracts/AquaInSAR_Data_Contract_v0.9.0.json` / `.md`)
 
 > This is a **methodology document**, not a results report. No AquaInSAR comparison has been
 > computed. No real data, scene manifest, deformation map or groundwater series exists in
 > the repository. Nothing here authorises a prediction, validation or well-failure claim.
+>
+> Section numbers 4.1–4.8 deliberately retain the numbering used in the W1 assignment
+> (Phase Two, sections 4.1–4.7). They are not a chapter index.
 
 ## 4.1 Research objective
 
@@ -76,7 +80,7 @@ No method is selected in W1. The choice depends on the pilot boundary, CRS, well
 | **Lag analysis** | A physical delay is hypothesized (e.g. pumping → compaction → water-level response) | Pre-register a small set of lags with hydrogeological rationale; report all tested lags, not only the best | Multiple lags inflate false positives; exploratory only |
 | **Time-series alignment** | Both series have sufficient length and coverage after matching | Align by declared date/interval; report overlap length, gaps and counts | Short overlap or seasonality can dominate results |
 
-**Acquisition vs observation:** `acquisition_date` for SAR and `observation_date` for wells are distinct fields in the contract. The displacement reference date, where present, must be recorded. Date-only well records retain day precision; no timezone is inferred. Asynchronous observations cannot establish simultaneity, and any association must be described with the actual dates and lags used.
+**Acquisition vs observation vs interval:** `acquisition_date` (SAR), `observation_date` (well) and the rainfall pair `period_start`/`period_end` are distinct concepts in the contract. The displacement reference date, where present, must be recorded. Rainfall is matched using its explicit closed interval, never `observation_date` alone. Date-only well records retain day precision; no timezone is inferred. Asynchronous observations cannot establish simultaneity, and any association must be described with the actual dates and lags used.
 
 ## 4.5 Exploratory statistical methodology
 

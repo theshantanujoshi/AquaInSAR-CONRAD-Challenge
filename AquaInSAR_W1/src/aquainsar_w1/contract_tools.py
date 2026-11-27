@@ -223,6 +223,11 @@ def validate_contract_structure(contract: dict[str, Any]) -> list[Issue]:
             )
             continue
         names: set[str] = set()
+        quality_definition = next(
+            (definition for definition in fields if definition.get("name") == "quality_flag"),
+            None,
+        )
+        quality_allowed = set(quality_definition.get("allowed_values", [])) if quality_definition else set()
         for definition in fields:
             name = definition.get("name")
             if not name or name in names:
@@ -267,6 +272,28 @@ def validate_contract_structure(contract: dict[str, Any]) -> list[Issue]:
                     Issue("ERROR", "VR-011", dataset_id, None, name,
                           "minimum is greater than maximum")
                 )
+            if "nullable_when_quality_flags" in definition:
+                conditional_flags = definition["nullable_when_quality_flags"]
+                if not isinstance(conditional_flags, list) or not all(
+                    isinstance(flag, str) for flag in conditional_flags
+                ):
+                    issues.append(
+                        Issue("ERROR", "VR-011", dataset_id, None, name,
+                              "nullable_when_quality_flags must be a list of strings")
+                    )
+                elif quality_allowed and not set(conditional_flags).issubset(quality_allowed):
+                    issues.append(
+                        Issue("ERROR", "VR-011", dataset_id, None, name,
+                              "nullable_when_quality_flags contains flags not allowed for this dataset")
+                    )
+
+        has_start = "period_start" in names
+        has_end = "period_end" in names
+        if has_start != has_end:
+            issues.append(
+                Issue("ERROR", "VR-011", dataset_id, None, None,
+                      "period_start and period_end must both be declared")
+            )
 
         for constraint in schema.get("unique_constraints", []):
             if not constraint or not set(constraint).issubset(names):
@@ -349,18 +376,28 @@ def validate_dataset_csv(
             "longitude": conventions.get("coordinates", {}).get("longitude_range"),
             "latitude": conventions.get("coordinates", {}).get("latitude_range"),
         }
+        quality_conventions = conventions.get("quality", {})
+        no_value_flags = set(quality_conventions.get("no_value_flags", []))
+        value_required_flags = set(quality_conventions.get("value_required_flags", []))
+        reason_codes = set(
+            conventions.get("missing_values", {}).get("reason_codes", [])
+        )
 
         seen_keys: dict[tuple[str, ...], tuple[int, str]] = {}
         for row_number, row in enumerate(reader, start=1):
             report.rows_read += 1
             present: dict[str, str] = {}
+            raw_quality = row.get("quality_flag")
+            quality_value = raw_quality.strip() if isinstance(raw_quality, str) else ""
             for definition in field_defs:
                 name = definition["name"]
                 raw = row.get(name)
                 value = raw.strip() if isinstance(raw, str) else ""
                 present[name] = value
+                conditional_flags = set(definition.get("nullable_when_quality_flags", []))
+                conditionally_nullable = bool(conditional_flags) and quality_value in conditional_flags
                 if not value:
-                    if definition["required"] and not definition["nullable"]:
+                    if definition["required"] and not definition["nullable"] and not conditionally_nullable:
                         report.issues.append(
                             Issue("ERROR", "VR-003", dataset_id, row_number, name,
                                   "empty value in non-nullable field")
@@ -420,6 +457,88 @@ def validate_dataset_csv(
                         Issue("ERROR", "VR-009", dataset_id, row_number, unit_field,
                               f"unit missing while {value_field} is present")
                     )
+
+            # VR-012/VR-013: a value is present only for value-required quality flags;
+            # no-value flags require an explicit reason for the empty measurement.
+            for definition in field_defs:
+                conditional_flags = definition.get("nullable_when_quality_flags")
+                if not conditional_flags:
+                    continue
+                value_field = definition["name"]
+                if quality_value in conditional_flags and present.get(value_field):
+                    report.issues.append(
+                        Issue("ERROR", "VR-012", dataset_id, row_number, value_field,
+                              f"value present while quality_flag={quality_value} means no reliable value")
+                    )
+                if quality_value not in no_value_flags or present.get(value_field):
+                    continue
+                reason_present = bool(present.get("missing_reason"))
+                if not reason_present and present.get("missing_reason_map"):
+                    try:
+                        parsed_reason_map = json.loads(present["missing_reason_map"])
+                        if (
+                            isinstance(parsed_reason_map, dict)
+                            and parsed_reason_map.get(value_field) in reason_codes
+                        ):
+                            reason_present = True
+                    except (ValueError, TypeError):
+                        pass
+                if not reason_present:
+                    report.issues.append(
+                        Issue("ERROR", "VR-013", dataset_id, row_number, value_field,
+                              f"no-value quality_flag={quality_value} requires a reason for empty {value_field}")
+                    )
+
+            expected_id = dataset["dataset_id"]
+            actual_id = present.get("dataset_id", "")
+            if actual_id and actual_id != expected_id and not actual_id.startswith(expected_id + "-v"):
+                report.issues.append(
+                    Issue("ERROR", "VR-014", dataset_id, row_number, "dataset_id",
+                          f"row dataset_id {actual_id!r} does not match selected dataset {expected_id!r}")
+                )
+
+            period_start = present.get("period_start", "")
+            period_end = present.get("period_end", "")
+            if period_start and period_end:
+                try:
+                    if date.fromisoformat(period_end) < date.fromisoformat(period_start):
+                        report.issues.append(
+                            Issue("ERROR", "VR-015", dataset_id, row_number, "period_end",
+                                  "period_end precedes period_start")
+                        )
+                except ValueError:
+                    pass  # parse failures are already reported as VR-004
+
+            reason_map_raw = present.get("missing_reason_map", "")
+            reason_map: dict[str, str] = {}
+            if reason_map_raw:
+                try:
+                    parsed_map = json.loads(reason_map_raw)
+                    if not isinstance(parsed_map, dict):
+                        raise ValueError("not a JSON object")
+                    for key, value in parsed_map.items():
+                        if key not in fields_by_name or value not in reason_codes:
+                            raise ValueError("unknown field or invalid reason code")
+                    reason_map = parsed_map
+                except (ValueError, TypeError) as exc:
+                    report.issues.append(
+                        Issue("ERROR", "VR-016", dataset_id, row_number, "missing_reason_map",
+                              f"invalid missing_reason_map: {exc}")
+                    )
+            empty_optional = [
+                definition["name"]
+                for definition in field_defs
+                if definition["name"] in header
+                and not definition["required"]
+                and definition["name"] not in {"missing_reason", "missing_reason_map"}
+                and not present.get(definition["name"])
+            ]
+            if len(empty_optional) > 1 and not reason_map:
+                report.issues.append(
+                    Issue("ERROR", "VR-016", dataset_id, row_number, "missing_reason_map",
+                          "multiple empty optional fields require per-field missing_reason_map: "
+                          + ", ".join(empty_optional))
+                )
 
             for constraint in schema.get("unique_constraints", []):
                 key = tuple(present.get(name, "") for name in constraint)

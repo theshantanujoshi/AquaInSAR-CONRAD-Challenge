@@ -7,6 +7,8 @@
     "owner": "AC (Aishwary)",
     "reviewer": "SJ",
     "version_date": "2026-11-24",
+    "revision_date": "2026-11-27",
+    "revision_note": "Unreleased draft corrections from PR review; v0.9.0 remains draft and is not a released contract version.",
     "review_gate": "2026-11-29",
     "promotion_gate": "2026-12-06",
     "governing_principles": [
@@ -41,7 +43,10 @@
         "INVALID",
         "NOT_APPLICABLE",
         "UNKNOWN"
-      ]
+      ],
+      "single_code_scope": "missing_reason is valid only when every empty optional field in the row shares that same reason.",
+      "structured_map": "When empty optional fields have different reasons, populate missing_reason_map with a JSON object mapping each empty field name to one reason code. The single missing_reason may then be empty.",
+      "structured_map_field": "missing_reason_map"
     },
     "timestamps": {
       "canonical_representation": "ISO 8601",
@@ -50,7 +55,12 @@
       "date_only_allowed": true,
       "date_only_temporal_precision": "day",
       "date_only_timezone_policy": "Do not invent a timezone for date-only source records; retain source value and flag precision.",
-      "acquisition_vs_observation": "SAR acquisition_date and well observation_date are distinct concepts and must not share a column unless a documented equivalence rule exists."
+      "acquisition_vs_observation": "SAR acquisition_date and well observation_date are distinct concepts and must not share a column unless a documented equivalence rule exists.",
+      "accumulation_interval": {
+        "period_fields": ["period_start", "period_end"],
+        "rule": "Rainfall records must carry period_start and period_end as ISO dates defining the closed accumulation interval. observation_date is the source-reported observation/publication date and must not be used alone for temporal matching.",
+        "matching_rule": "Match rainfall to deformation or well records using [period_start, period_end], not observation_date."
+      }
     },
     "coordinates": {
       "axis_order": ["longitude_x", "latitude_y"],
@@ -90,6 +100,9 @@
     },
     "quality": {
       "policy": "Quality flags and uncertainty fields travel with measurements. If uncertainty is not quantified, the value is empty and the reason is UNKNOWN or NOT_MEASURED; absence must not be read as certainty.",
+      "value_present_semantics": "quality_flag states whether a measurement value is present and trustworthy. Flags VALID, LOW_COHERENCE, ATMOSPHERIC and QUESTIONABLE require a value. Flags MASKED, INVALID, UNKNOWN and NOT_MEASURED mean no reliable value exists: the measurement value field must be empty and a reason must be recorded.",
+      "value_required_flags": ["VALID", "LOW_COHERENCE", "ATMOSPHERIC", "QUESTIONABLE"],
+      "no_value_flags": ["MASKED", "INVALID", "UNKNOWN", "NOT_MEASURED"],
       "severity_levels": ["ERROR", "WARNING"]
     }
   },
@@ -104,7 +117,12 @@
     {"id": "VR-008", "name": "duplicate_key", "severity": "ERROR", "description": "Every declared unique constraint must hold across all rows."},
     {"id": "VR-009", "name": "unit_pair_presence", "severity": "ERROR", "description": "If a measurement value is present, its paired unit field must be present."},
     {"id": "VR-010", "name": "provenance_completeness", "severity": "ERROR", "description": "Dataset metadata and record provenance fields required by the contract must be present and non-empty."},
-    {"id": "VR-011", "name": "contract_internal_consistency", "severity": "ERROR", "description": "The machine-readable contract must have unique dataset ids, unique field names per dataset, valid field definitions and resolvable unique-constraint fields."}
+    {"id": "VR-011", "name": "contract_internal_consistency", "severity": "ERROR", "description": "The machine-readable contract must have unique dataset ids, unique field names per dataset, valid field definitions and resolvable unique-constraint fields."},
+    {"id": "VR-012", "name": "value_quality_consistency", "severity": "ERROR", "description": "A measurement value must be present for value-required quality flags and must be empty for no-value flags."},
+    {"id": "VR-013", "name": "no_value_reason", "severity": "ERROR", "description": "A no-value quality flag requires a reason in missing_reason or in missing_reason_map for that value field."},
+    {"id": "VR-014", "name": "dataset_id_match", "severity": "ERROR", "description": "Each row dataset_id must equal the dataset being validated, or use the '<selected dataset id>-v<semver>' version form."},
+    {"id": "VR-015", "name": "period_order", "severity": "ERROR", "description": "period_end must not precede period_start; both are required for rainfall accumulation records."},
+    {"id": "VR-016", "name": "missing_reason_map", "severity": "ERROR", "description": "missing_reason_map must parse as a JSON object of field-to-reason-code entries and must cover every empty optional field when more than one optional field is empty."}
   ],
   "datasets": [
     {
@@ -136,25 +154,31 @@
         "encoding": "utf-8",
         "fields": [
           {"name": "observation_id", "type": "string", "required": true, "nullable": false, "unit": null, "pattern": "^[A-Za-z0-9_.:-]+$", "description": "Stable unique identifier for one displacement observation record.", "provenance": "generated by processing run"},
-          {"name": "dataset_id", "type": "string", "required": true, "nullable": false, "unit": null, "pattern": "^AQS-[A-Z]+-[A-Z0-9-]+$", "description": "Identifier of the source/derived dataset version.", "provenance": "contract"},
+          {"name": "dataset_id", "type": "string", "required": true, "nullable": false, "unit": null, "pattern": "^AQS-[A-Z]+-[A-Z0-9-]+(-v[0-9]+\\.[0-9]+\\.[0-9]+)?$", "description": "Identifier of the source/derived dataset version.", "provenance": "contract"},
           {"name": "pixel_id", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Stable pixel or persistent-scatterer identifier within the processing frame.", "provenance": "processing configuration"},
           {"name": "longitude", "type": "decimal", "required": true, "nullable": false, "unit": "degrees", "description": "X coordinate in the declared CRS; longitude when CRS is geographic.", "provenance": "source or processing geometry"},
           {"name": "latitude", "type": "decimal", "required": true, "nullable": false, "unit": "degrees", "description": "Y coordinate in the declared CRS; latitude when CRS is geographic.", "provenance": "source or processing geometry"},
           {"name": "crs", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Explicit CRS identifier (EPSG code or WKT). Required even though the canonical value is pending.", "provenance": "dataset metadata"},
           {"name": "acquisition_date", "type": "date", "required": true, "nullable": false, "unit": null, "description": "SAR acquisition date for this observation; distinct from well observation_date.", "provenance": "scene metadata"},
+          {"name": "platform", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["SENTINEL-1A", "SENTINEL-1B", "SENTINEL-1C"], "description": "Radar platform that acquired the scene.", "provenance": "scene metadata"},
+          {"name": "relative_orbit", "type": "integer", "required": true, "nullable": false, "unit": null, "minimum": 1, "maximum": 175, "description": "Sentinel-1 relative orbit number defining the track together with pass_direction.", "provenance": "scene metadata"},
+          {"name": "pass_direction", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["ASCENDING", "DESCENDING"], "description": "Orbit pass direction; required so ascending and descending tracks are not pooled silently.", "provenance": "scene metadata"},
+          {"name": "polarization", "type": "string", "required": false, "nullable": true, "unit": null, "allowed_values": ["VV", "VH", "HV", "HH", "VV+VH"], "description": "Radar polarization channel used, where known.", "provenance": "scene metadata"},
+          {"name": "incidence_angle", "type": "decimal", "required": false, "nullable": true, "unit": "degrees", "minimum": 0.0, "maximum": 90.0, "description": "Look incidence angle at the observation, where known.", "provenance": "processing geometry"},
           {"name": "reference_date", "type": "date", "required": false, "nullable": true, "unit": null, "description": "Date to which the displacement is referenced, if the product is a time series relative to a reference.", "provenance": "processing configuration"},
           {"name": "measurement_convention", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["LOS", "VERTICAL", "UNKNOWN"], "description": "Whether displacement is line-of-sight, vertical or unknown.", "provenance": "processing configuration"},
-          {"name": "deformation_value", "type": "decimal", "required": true, "nullable": false, "unit": "see deformation_unit", "description": "Displacement value; sign convention must be documented in processing_lineage.", "provenance": "processing output"},
+          {"name": "deformation_value", "type": "decimal", "required": true, "nullable": false, "nullable_when_quality_flags": ["MASKED", "INVALID", "UNKNOWN"], "unit": "see deformation_unit", "description": "Displacement value; empty only for no-value quality flags. Sign convention must be documented in processing_lineage.", "provenance": "processing output"},
           {"name": "deformation_unit", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Unit of deformation_value; no implicit conversion is performed.", "provenance": "processing output"},
           {"name": "coherence", "type": "decimal", "required": false, "nullable": true, "unit": "fraction", "minimum": 0.0, "maximum": 1.0, "description": "Interferometric coherence where supplied.", "provenance": "processing output"},
-          {"name": "quality_flag", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["VALID", "LOW_COHERENCE", "ATMOSPHERIC", "MASKED", "INVALID", "UNKNOWN"], "description": "Processing quality state of this observation.", "provenance": "processing output"},
+          {"name": "quality_flag", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["VALID", "LOW_COHERENCE", "ATMOSPHERIC", "MASKED", "INVALID", "UNKNOWN"], "description": "Processing quality state; VALID/LOW_COHERENCE/ATMOSPHERIC require a value, MASKED/INVALID/UNKNOWN mean no reliable value.", "provenance": "processing output"},
           {"name": "uncertainty_value", "type": "decimal", "required": false, "nullable": true, "unit": "same as deformation_unit", "minimum": 0.0, "description": "Uncertainty estimate when quantified; empty otherwise.", "provenance": "processing output"},
           {"name": "uncertainty_method", "type": "string", "required": false, "nullable": true, "unit": null, "description": "Method used for uncertainty_value, or NOT_QUANTIFIED where applicable.", "provenance": "processing output"},
-          {"name": "missing_reason", "type": "string", "required": false, "nullable": true, "unit": null, "allowed_values": ["NOT_MEASURED", "MASKED", "UNAVAILABLE", "INVALID", "NOT_APPLICABLE", "UNKNOWN"], "description": "Reason code for any empty optional field.", "provenance": "producer"},
+          {"name": "missing_reason", "type": "string", "required": false, "nullable": true, "unit": null, "allowed_values": ["NOT_MEASURED", "MASKED", "UNAVAILABLE", "INVALID", "NOT_APPLICABLE", "UNKNOWN"], "description": "Single reason code, valid only when all empty optional fields share this reason.", "provenance": "producer"},
+          {"name": "missing_reason_map", "type": "string", "required": false, "nullable": true, "unit": null, "description": "JSON object mapping empty optional field names to reason codes when reasons differ.", "provenance": "producer"},
           {"name": "source_reference", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Link or citation identifying the exact source version.", "provenance": "producer"},
           {"name": "processing_lineage", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Inputs, code/config version, parameters, date and operator for this derived value.", "provenance": "producer"}
         ],
-        "unique_constraints": [["observation_id"], ["pixel_id", "acquisition_date"]],
+        "unique_constraints": [["observation_id"], ["pixel_id", "acquisition_date", "relative_orbit", "pass_direction"]],
         "unit_pairs": [["deformation_value", "deformation_unit"]]
       }
     },
@@ -187,20 +211,21 @@
         "encoding": "utf-8",
         "fields": [
           {"name": "observation_id", "type": "string", "required": true, "nullable": false, "unit": null, "pattern": "^[A-Za-z0-9_.:-]+$", "description": "Stable unique identifier for one well observation record.", "provenance": "generated during ingest"},
-          {"name": "dataset_id", "type": "string", "required": true, "nullable": false, "unit": null, "pattern": "^AQS-[A-Z]+-[A-Z0-9-]+$", "description": "Identifier of the dataset version used for this record.", "provenance": "contract"},
+          {"name": "dataset_id", "type": "string", "required": true, "nullable": false, "unit": null, "pattern": "^AQS-[A-Z]+-[A-Z0-9-]+(-v[0-9]+\\.[0-9]+\\.[0-9]+)?$", "description": "Identifier of the dataset version used for this record.", "provenance": "contract"},
           {"name": "station_id", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Monitoring-well identifier as published by the source.", "provenance": "source table"},
           {"name": "observation_date", "type": "date", "required": true, "nullable": false, "unit": null, "description": "Date on which the water level was observed; date-only sources keep day precision.", "provenance": "source table"},
           {"name": "longitude", "type": "decimal", "required": true, "nullable": false, "unit": "degrees", "description": "Well longitude in the declared CRS.", "provenance": "source table"},
           {"name": "latitude", "type": "decimal", "required": true, "nullable": false, "unit": "degrees", "description": "Well latitude in the declared CRS.", "provenance": "source table"},
           {"name": "crs", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Explicit CRS identifier; required even while the canonical value is pending.", "provenance": "dataset metadata"},
-          {"name": "measurement_value", "type": "decimal", "required": true, "nullable": false, "unit": "see measurement_unit", "description": "Water-level depth or head value; sign/origin depends on measurement_type.", "provenance": "source table"},
+          {"name": "measurement_value", "type": "decimal", "required": true, "nullable": false, "nullable_when_quality_flags": ["INVALID", "UNKNOWN", "NOT_MEASURED"], "unit": "see measurement_unit", "description": "Water-level depth or head value; empty only for no-value quality flags. Sign/origin depends on measurement_type.", "provenance": "source table"},
           {"name": "measurement_unit", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Unit of measurement_value; recorded from source without conversion.", "provenance": "source table"},
           {"name": "measurement_type", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["WATER_LEVEL_DEPTH_BGL", "PIEZOMETRIC_HEAD", "UNKNOWN"], "description": "What the measurement represents.", "provenance": "source metadata"},
           {"name": "datum", "type": "string", "required": false, "nullable": true, "unit": null, "description": "Elevation or measurement datum if supplied by the source.", "provenance": "source metadata"},
           {"name": "screen_depth_m", "type": "decimal", "required": false, "nullable": true, "unit": "m", "minimum": 0.0, "description": "Well screen depth where known.", "provenance": "source metadata"},
           {"name": "aquifer", "type": "string", "required": false, "nullable": true, "unit": null, "description": "Aquifer or group tapped, if documented.", "provenance": "source metadata"},
-          {"name": "quality_flag", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["VALID", "QUESTIONABLE", "INVALID", "UNKNOWN", "NOT_MEASURED"], "description": "Source/producer quality state.", "provenance": "source metadata"},
-          {"name": "missing_reason", "type": "string", "required": false, "nullable": true, "unit": null, "allowed_values": ["NOT_MEASURED", "MASKED", "UNAVAILABLE", "INVALID", "NOT_APPLICABLE", "UNKNOWN"], "description": "Reason code for any empty optional field.", "provenance": "producer"},
+          {"name": "quality_flag", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["VALID", "QUESTIONABLE", "INVALID", "UNKNOWN", "NOT_MEASURED"], "description": "Source/producer quality state; VALID/QUESTIONABLE require a value, INVALID/UNKNOWN/NOT_MEASURED mean no reliable value.", "provenance": "source metadata"},
+          {"name": "missing_reason", "type": "string", "required": false, "nullable": true, "unit": null, "allowed_values": ["NOT_MEASURED", "MASKED", "UNAVAILABLE", "INVALID", "NOT_APPLICABLE", "UNKNOWN"], "description": "Single reason code, valid only when all empty optional fields share this reason.", "provenance": "producer"},
+          {"name": "missing_reason_map", "type": "string", "required": false, "nullable": true, "unit": null, "description": "JSON object mapping empty optional field names to reason codes when reasons differ.", "provenance": "producer"},
           {"name": "source_reference", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Exact source publication/table identifier.", "provenance": "producer"},
           {"name": "retrieval_date", "type": "date", "required": true, "nullable": false, "unit": null, "description": "Date the source value was retrieved.", "provenance": "ingest"},
           {"name": "processing_lineage", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Extraction and transformation steps from source table to this record.", "provenance": "ingest"}
@@ -237,23 +262,26 @@
         "encoding": "utf-8",
         "fields": [
           {"name": "observation_id", "type": "string", "required": true, "nullable": false, "unit": null, "pattern": "^[A-Za-z0-9_.:-]+$", "description": "Stable unique identifier for one rainfall record.", "provenance": "generated during ingest"},
-          {"name": "dataset_id", "type": "string", "required": true, "nullable": false, "unit": null, "pattern": "^AQS-[A-Z]+-[A-Z0-9-]+$", "description": "Identifier of the dataset version used for this record.", "provenance": "contract"},
+          {"name": "dataset_id", "type": "string", "required": true, "nullable": false, "unit": null, "pattern": "^AQS-[A-Z]+-[A-Z0-9-]+(-v[0-9]+\\.[0-9]+\\.[0-9]+)?$", "description": "Identifier of the dataset version used for this record.", "provenance": "contract"},
           {"name": "location_id", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Station, district or grid identifier as published.", "provenance": "source table"},
-          {"name": "observation_date", "type": "date", "required": true, "nullable": false, "unit": null, "description": "Start or representative date of the accumulation interval; exact semantics must be documented in lineage.", "provenance": "source table"},
+          {"name": "observation_date", "type": "date", "required": true, "nullable": false, "unit": null, "description": "Source-reported observation/publication date; not used alone for temporal matching.", "provenance": "source table"},
+          {"name": "period_start", "type": "date", "required": true, "nullable": false, "unit": null, "description": "Inclusive start date of the rainfall accumulation interval.", "provenance": "source metadata"},
+          {"name": "period_end", "type": "date", "required": true, "nullable": false, "unit": null, "description": "Inclusive end date of the rainfall accumulation interval; must not precede period_start.", "provenance": "source metadata"},
           {"name": "longitude", "type": "decimal", "required": true, "nullable": false, "unit": "degrees", "description": "Representative coordinate in the declared CRS.", "provenance": "source metadata"},
           {"name": "latitude", "type": "decimal", "required": true, "nullable": false, "unit": "degrees", "description": "Representative coordinate in the declared CRS.", "provenance": "source metadata"},
           {"name": "crs", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Explicit CRS identifier.", "provenance": "dataset metadata"},
-          {"name": "rainfall_value", "type": "decimal", "required": true, "nullable": false, "unit": "see rainfall_unit", "description": "Rainfall total for the declared accumulation period.", "provenance": "source table"},
+          {"name": "rainfall_value", "type": "decimal", "required": true, "nullable": false, "nullable_when_quality_flags": ["INVALID", "UNKNOWN"], "unit": "see rainfall_unit", "description": "Rainfall total for [period_start, period_end]; empty only for no-value quality flags.", "provenance": "source table"},
           {"name": "rainfall_unit", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Unit of rainfall_value; recorded from source.", "provenance": "source table"},
-          {"name": "accumulation_period", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["DAY", "MONTH", "SEASON", "YEAR", "UNKNOWN"], "description": "Interval over which rainfall_value is accumulated.", "provenance": "source metadata"},
+          {"name": "accumulation_period", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["DAY", "MONTH", "SEASON", "YEAR", "UNKNOWN"], "description": "Category of the [period_start, period_end] interval; explicit dates take precedence for matching.", "provenance": "source metadata"},
           {"name": "source_spatial_support", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["STATION", "DISTRICT_AGGREGATE", "GRID", "UNKNOWN"], "description": "Spatial support of the source value; controls allowable matching methods.", "provenance": "source metadata"},
-          {"name": "quality_flag", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["VALID", "QUESTIONABLE", "INVALID", "UNKNOWN"], "description": "Source quality state.", "provenance": "source metadata"},
-          {"name": "missing_reason", "type": "string", "required": false, "nullable": true, "unit": null, "allowed_values": ["NOT_MEASURED", "MASKED", "UNAVAILABLE", "INVALID", "NOT_APPLICABLE", "UNKNOWN"], "description": "Reason code for any empty optional field.", "provenance": "producer"},
+          {"name": "quality_flag", "type": "string", "required": true, "nullable": false, "unit": null, "allowed_values": ["VALID", "QUESTIONABLE", "INVALID", "UNKNOWN"], "description": "Source quality state; VALID/QUESTIONABLE require a value, INVALID/UNKNOWN mean no reliable value.", "provenance": "source metadata"},
+          {"name": "missing_reason", "type": "string", "required": false, "nullable": true, "unit": null, "allowed_values": ["NOT_MEASURED", "MASKED", "UNAVAILABLE", "INVALID", "NOT_APPLICABLE", "UNKNOWN"], "description": "Single reason code, valid only when all empty optional fields share this reason.", "provenance": "producer"},
+          {"name": "missing_reason_map", "type": "string", "required": false, "nullable": true, "unit": null, "description": "JSON object mapping empty optional field names to reason codes when reasons differ.", "provenance": "producer"},
           {"name": "source_reference", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Exact source table or product identifier.", "provenance": "producer"},
           {"name": "retrieval_date", "type": "date", "required": true, "nullable": false, "unit": null, "description": "Date the source value was retrieved.", "provenance": "ingest"},
           {"name": "processing_lineage", "type": "string", "required": true, "nullable": false, "unit": null, "description": "Extraction and transformation steps to this record.", "provenance": "ingest"}
         ],
-        "unique_constraints": [["observation_id"], ["location_id", "observation_date", "accumulation_period"]],
+        "unique_constraints": [["observation_id"], ["location_id", "period_start", "period_end"]],
         "unit_pairs": [["rainfall_value", "rainfall_unit"]]
       }
     },
